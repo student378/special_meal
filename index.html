@@ -328,7 +328,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--gray100);min-height:
 // ══════════════════════════════════════════
 const CONFIG = {
   GAS_URL: 'https://script.google.com/macros/s/AKfycbzq_BPUDc8qm5s9pXYGnwWaYo2DAdgmVn9mWucein3IW-maoDzLr_wXjQiA2k7l9Tan/exec',   // ← 배포 후 실제 웹 앱 URL 로 교체 (YOUR_DEPLOYMENT_ID 가 있으면 데모 모드)
-  SLOTS: ['11시', '13시'],
+  SLOTS: ['11시', '12시'],
   STUDENT_ID_LEN: 9,
   TITLE: '천원의 아침밥 특식 신청',
   PRIVACY: {
@@ -345,7 +345,7 @@ const DAY_NAMES = ['일','월','화','수','목','금','토'];
 // 데모 모드 전용 샘플 당첨자 (실제 URL 을 넣으면 사용되지 않음)
 const DEMO_WINNERS = [
   {sid:'202601001', name:'홍길동', slot:'11시'},
-  {sid:'202601002', name:'김영희', slot:'13시'}
+  {sid:'202601002', name:'김영희', slot:'12시'}
 ];
 
 function esc(s){
@@ -553,7 +553,7 @@ document.addEventListener('DOMContentLoaded',function(){
   if(IS_DEMO){
     const b=document.createElement('div');
     b.style.cssText='background:#f59e0b;color:#fff;text-align:center;padding:6px 10px;font-size:12px;font-weight:700';
-    b.textContent='⚡ 데모 모드 — GAS_URL 을 실제 배포 URL 로 바꾸면 실제 당첨자 명단으로 동작합니다 (데모 당첨자: 202601001 홍길동 11시 / 202601002 김영희 13시)';
+    b.textContent='⚡ 데모 모드 — GAS_URL 을 실제 배포 URL 로 바꾸면 실제 당첨자 명단으로 동작합니다 (데모 당첨자: 202601001 홍길동 11시 / 202601002 김영희 12시)';
     document.body.insertBefore(b, document.body.firstChild);
     return;
   }
