@@ -327,8 +327,8 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--gray100);min-height:
 //  설정 — 이 블록만 고치면 됩니다 (서버 Code.gs 의 CFG 와 SLOTS·학번 자릿수가 같아야 함)
 // ══════════════════════════════════════════
 const CONFIG = {
-  GAS_URL: 'https://script.google.com/macros/s/AKfycbzq_BPUDc8qm5s9pXYGnwWaYo2DAdgmVn9mWucein3IW-maoDzLr_wXjQiA2k7l9Tan/exec',   // ← 배포 후 실제 웹 앱 URL 로 교체 (YOUR_DEPLOYMENT_ID 가 있으면 데모 모드)
-  SLOTS: ['11시', '12시'],
+  GAS_URL: 'https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec',   // ← 배포 후 실제 웹 앱 URL 로 교체 (YOUR_DEPLOYMENT_ID 가 있으면 데모 모드)
+  SLOTS: ['11시', '13시'],
   STUDENT_ID_LEN: 9,
   TITLE: '천원의 아침밥 특식 신청',
   PRIVACY: {
@@ -345,7 +345,7 @@ const DAY_NAMES = ['일','월','화','수','목','금','토'];
 // 데모 모드 전용 샘플 당첨자 (실제 URL 을 넣으면 사용되지 않음)
 const DEMO_WINNERS = [
   {sid:'202601001', name:'홍길동', slot:'11시'},
-  {sid:'202601002', name:'김영희', slot:'12시'}
+  {sid:'202601002', name:'김영희', slot:'13시'}
 ];
 
 function esc(s){
@@ -395,8 +395,7 @@ function fetchFromGAS(params, callback){
 // ══════════════════════════════════════════
 function buildStatic(){
   document.getElementById('hdTitle').textContent = '🍱 '+CONFIG.TITLE;
-  document.getElementById('slotOptions').innerHTML = CONFIG.SLOTS.map(s=>
-    '<label class="slot-opt"><input type="radio" name="slot" value="'+esc(s)+'"> '+esc(s)+'</label>').join('');
+  renderSlotOptions(CONFIG.SLOTS);
   const P = CONFIG.PRIVACY;
   document.getElementById('pvTable').innerHTML =
     '<tr><th>수집·이용 목적</th><td>'+esc(P.purpose)+'</td></tr>'+
@@ -404,6 +403,17 @@ function buildStatic(){
     '<tr><th>보유·이용 기간</th><td><b>'+esc(P.retention)+'</b>'+(P.retentionSub?'<br><span class="pv-sub">'+esc(P.retentionSub)+'</span>':'')+'</td></tr>';
   const sid = document.getElementById('studentId'); sid.maxLength = CONFIG.STUDENT_ID_LEN;
   sid.placeholder = '예) 202601001';
+}
+// 당첨시간 선택지 — 서버(getSettings)가 알려 주는 목록으로 바뀜. 선택해 둔 값은 유지
+function renderSlotOptions(list){
+  list=(list||[]).filter(Boolean);
+  const box=document.getElementById('slotOptions');
+  const sig=list.join('|'); if(box.getAttribute('data-sig')===sig) return;
+  const cur=selectedSlot();
+  box.setAttribute('data-sig',sig);
+  box.innerHTML = list.map(s=>
+    '<label class="slot-opt"><input type="radio" name="slot" value="'+esc(s)+'"'+(s===cur?' checked':'')+'> '+esc(s)+'</label>').join('');
+  CONFIG.SLOTS=list;
 }
 function refreshDate(){ document.getElementById('dateBox').firstChild.nodeValue = fDateKr(kstDate()); }
 
@@ -414,6 +424,7 @@ function applySettings(d){
   settings.closedManual = (d.closedManual==='true');
   settings.closedMsg = d.closedMsg || '';
   settings.notice = d.notice || '';
+  if(d.slots){ const L=String(d.slots).split(',').map(x=>x.trim()).filter(Boolean); if(L.length) renderSlotOptions(L); }
   if(d.eventTitle){ CONFIG.TITLE = String(d.eventTitle).slice(0,40); document.getElementById('hdTitle').textContent='🍱 '+CONFIG.TITLE; }
   document.getElementById('noticeExtra').textContent = settings.notice ? ' '+settings.notice : '';
 }
@@ -507,7 +518,8 @@ function submitApply(){
     if(res && res.status==='notwinner'){ showErr('❌ 신청할 수 없습니다 (당첨자 아님)', res.message||'특식 당첨자만 신청할 수 있습니다.'); return; }
     if(res && res.status==='slotmismatch'){
       showErr('당첨시간을 확인해주세요', res.message||'');
-      const r=document.querySelector('input[name="slot"][value="'+(res.slot||'').replace(/"/g,'')+'"]'); if(r) r.checked=true; return;
+      if(res.slot && CONFIG.SLOTS.indexOf(res.slot)<0) renderSlotOptions(CONFIG.SLOTS.concat([res.slot]));
+      const r=Array.prototype.filter.call(document.querySelectorAll('input[name="slot"]'),function(x){ return x.value===res.slot; })[0]; if(r) r.checked=true; return;
     }
     if(res && res.status==='duplicate'){
       if(res.info){ const info=Object.assign({},res.info); LS.set('last',info); showConfirm(info,true); refreshSavedBtn(); }
@@ -553,7 +565,7 @@ document.addEventListener('DOMContentLoaded',function(){
   if(IS_DEMO){
     const b=document.createElement('div');
     b.style.cssText='background:#f59e0b;color:#fff;text-align:center;padding:6px 10px;font-size:12px;font-weight:700';
-    b.textContent='⚡ 데모 모드 — GAS_URL 을 실제 배포 URL 로 바꾸면 실제 당첨자 명단으로 동작합니다 (데모 당첨자: 202601001 홍길동 11시 / 202601002 김영희 12시)';
+    b.textContent='⚡ 데모 모드 — GAS_URL 을 실제 배포 URL 로 바꾸면 실제 당첨자 명단으로 동작합니다 (데모 당첨자: 202601001 홍길동 11시 / 202601002 김영희 13시)';
     document.body.insertBefore(b, document.body.firstChild);
     return;
   }
